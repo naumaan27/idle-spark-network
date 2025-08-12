@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -14,42 +14,80 @@ import {
   Target,
   CheckCircle2
 } from 'lucide-react';
-import { currentUser, impactStories } from '@/data/mockData';
+import { useDeviceSensors } from '@/hooks/useDeviceSensors';
+import { useTokenCalculator } from '@/hooks/useTokenCalculator';
+import { useToast } from '@/hooks/use-toast';
+import { impactStories, badges } from '@/data/mockData';
+import ImpactModal from '@/components/modals/ImpactModal';
+import BadgeModal from '@/components/modals/BadgeModal';
+import DeviceStatusModal from '@/components/modals/DeviceStatusModal';
 import heroDevices from '@/assets/hero-devices.jpg';
-import climateIcon from '@/assets/climate-icon.jpg';
 
 const Dashboard = () => {
+  const { deviceStatus } = useDeviceSensors();
+  const { tokens, contributionTime, co2Saved, tasksCompleted, sustainabilityScore } = useTokenCalculator();
+  const { toast } = useToast();
+  
+  const [impactModalOpen, setImpactModalOpen] = useState(false);
+  const [badgeModalOpen, setBadgeModalOpen] = useState(false);
+  const [deviceModalOpen, setDeviceModalOpen] = useState(false);
   const stats = [
     {
       title: 'Sustainability Score',
-      value: currentUser.sustainabilityScore,
+      value: sustainabilityScore,
       suffix: '/100',
       icon: Leaf,
       description: 'Your environmental impact rating'
     },
     {
       title: 'Total Tokens',
-      value: currentUser.totalTokens.toLocaleString(),
+      value: tokens.toLocaleString(),
       icon: Zap,
       description: 'Earned through contributions'
     },
     {
       title: 'Contribution Time',
-      value: Math.floor(currentUser.totalContributionMinutes / 60),
+      value: Math.floor(contributionTime / 60),
       suffix: ' hours',
       icon: Clock,
       description: 'Device compute time donated'
     },
     {
       title: 'CO₂ Saved',
-      value: currentUser.co2Saved,
+      value: co2Saved,
       suffix: ' kg',
       icon: Globe,
       description: 'Environmental impact achieved'
     }
   ];
 
-  const recentBadges = currentUser.badges.slice(-2);
+  const recentBadges = badges.slice(0, 2);
+
+  const handleRedeemTokens = () => {
+    toast({
+      title: "Token Redemption",
+      description: "Feature coming soon! You'll be able to redeem tokens for rewards.",
+    });
+  };
+
+  const getCurrentTask = () => {
+    if (deviceStatus.isCharging && deviceStatus.isIdle && deviceStatus.batteryLevel > 20) {
+      const taskType = deviceStatus.batteryLevel > 80 ? 'climate' : 'healthcare';
+      return {
+        title: taskType === 'climate' ? 'Climate Simulation Analysis' : 'AI Health Diagnostic',
+        description: taskType === 'climate' 
+          ? 'Analyzing atmospheric data for carbon capture optimization'
+          : 'Processing medical imaging for rural clinic diagnostics',
+        progress: Math.floor(Math.random() * 40) + 40,
+        estimatedMinutes: Math.floor(Math.random() * 30) + 10,
+        tokensReward: Math.floor(Math.random() * 30) + 20,
+        co2Impact: Math.random() * 2 + 1
+      };
+    }
+    return null;
+  };
+
+  const currentTask = getCurrentTask();
 
   return (
     <div className="space-y-6">
@@ -65,37 +103,47 @@ const Dashboard = () => {
         />
         <div className="relative z-10">
           <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {currentUser.name.split(' ')[0]}! 👋
+            Welcome back, Arjun! 👋
           </h1>
           <p className="text-xl opacity-90 mb-6">
-            Your {currentUser.deviceType} is making a difference while you sleep
+            Your device is making a difference while you sleep
           </p>
           
-          {currentUser.isIdle && currentUser.currentTask ? (
+          {currentTask ? (
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold">{currentUser.currentTask.title}</h3>
+                <h3 className="font-semibold">{currentTask.title}</h3>
                 <span className="text-sm opacity-75">
-                  {currentUser.currentTask.estimatedMinutes} min remaining
+                  {currentTask.estimatedMinutes} min remaining
                 </span>
               </div>
-              <p className="text-sm opacity-90 mb-3">{currentUser.currentTask.description}</p>
-              <Progress value={currentUser.currentTask.progress} className="h-2" />
+              <p className="text-sm opacity-90 mb-3">{currentTask.description}</p>
+              <Progress value={currentTask.progress} className="h-2" />
               <div className="flex justify-between text-xs mt-2 opacity-75">
-                <span>{currentUser.currentTask.progress}% complete</span>
-                <span>+{currentUser.currentTask.tokensReward} tokens • {currentUser.currentTask.co2Impact}kg CO₂</span>
+                <span>{currentTask.progress}% complete</span>
+                <span>+{currentTask.tokensReward} tokens • {currentTask.co2Impact.toFixed(1)}kg CO₂</span>
               </div>
             </div>
           ) : (
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4">
               <div className="flex items-center space-x-2">
                 <Activity className="h-5 w-5" />
-                <span>Device ready for next contribution</span>
+                <span>
+                  {deviceStatus.isCharging 
+                    ? 'Device charging - ready for next contribution' 
+                    : 'Connect charger to start contributing'
+                  }
+                </span>
               </div>
             </div>
           )}
 
-          <Button variant="eco-soft" size="lg" className="bg-white/20 hover:bg-white/30">
+          <Button 
+            variant="eco-soft" 
+            size="lg" 
+            className="bg-white/20 hover:bg-white/30"
+            onClick={() => setImpactModalOpen(true)}
+          >
             View Impact Details
           </Button>
         </div>
@@ -153,7 +201,12 @@ const Dashboard = () => {
                 </p>
               </div>
             ))}
-            <Button variant="eco-ghost" size="sm" className="w-full">
+            <Button 
+              variant="eco-ghost" 
+              size="sm" 
+              className="w-full"
+              onClick={() => setImpactModalOpen(true)}
+            >
               View All Impact Stories
             </Button>
           </CardContent>
@@ -192,7 +245,12 @@ const Dashboard = () => {
               </p>
             </div>
 
-            <Button variant="eco-ghost" size="sm" className="w-full">
+            <Button 
+              variant="eco-ghost" 
+              size="sm" 
+              className="w-full"
+              onClick={() => setBadgeModalOpen(true)}
+            >
               View All Badges
             </Button>
           </CardContent>
@@ -209,12 +267,20 @@ const Dashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="eco-soft" className="h-auto p-4 flex-col space-y-2">
+            <Button 
+              variant="eco-soft" 
+              className="h-auto p-4 flex-col space-y-2"
+              onClick={() => setDeviceModalOpen(true)}
+            >
               <CheckCircle2 className="h-6 w-6" />
               <span>Check Device Status</span>
               <span className="text-xs opacity-75">Optimize contribution settings</span>
             </Button>
-            <Button variant="eco-soft" className="h-auto p-4 flex-col space-y-2">
+            <Button 
+              variant="eco-soft" 
+              className="h-auto p-4 flex-col space-y-2"
+              onClick={handleRedeemTokens}
+            >
               <Globe className="h-6 w-6" />
               <span>Redeem Tokens</span>
               <span className="text-xs opacity-75">Exchange for rewards</span>
@@ -227,6 +293,11 @@ const Dashboard = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modals */}
+      <ImpactModal open={impactModalOpen} onOpenChange={setImpactModalOpen} />
+      <BadgeModal open={badgeModalOpen} onOpenChange={setBadgeModalOpen} userBadges={badges.slice(0, 3)} />
+      <DeviceStatusModal open={deviceModalOpen} onOpenChange={setDeviceModalOpen} />
     </div>
   );
 };

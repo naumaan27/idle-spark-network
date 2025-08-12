@@ -2,10 +2,13 @@ import React from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { Leaf, BarChart3, User, Settings, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { currentUser } from '@/data/mockData';
+import { useDeviceSensors } from '@/hooks/useDeviceSensors';
+import { useTokenCalculator } from '@/hooks/useTokenCalculator';
 
 const Layout = () => {
   const location = useLocation();
+  const { deviceStatus } = useDeviceSensors();
+  const { tokens } = useTokenCalculator();
 
   const navItems = [
     { to: '/', icon: BarChart3, label: 'Dashboard' },
@@ -36,11 +39,11 @@ const Layout = () => {
 
             <div className="flex items-center space-x-4">
               {/* Contribution Status */}
-              {currentUser.isIdle && currentUser.currentTask && (
+              {deviceStatus.isCharging && deviceStatus.isIdle && (
                 <div className="flex items-center space-x-2 bg-primary-soft/30 px-3 py-1 rounded-full">
                   <div className="w-2 h-2 bg-primary rounded-full animate-eco-pulse"></div>
                   <span className="text-sm text-primary font-medium">
-                    Running {currentUser.currentTask.type} task...
+                    Running {deviceStatus.batteryLevel > 80 ? 'climate' : 'healthcare'} task...
                   </span>
                 </div>
               )}
@@ -48,12 +51,12 @@ const Layout = () => {
               {/* Token Count */}
               <div className="flex items-center space-x-1 bg-card border rounded-full px-3 py-1">
                 <Zap className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">{currentUser.totalTokens.toLocaleString()}</span>
+                <span className="text-sm font-medium">{tokens.toLocaleString()}</span>
               </div>
 
               {/* User Avatar */}
               <div className="w-8 h-8 bg-eco-gradient rounded-full flex items-center justify-center text-primary-foreground font-medium text-sm">
-                {currentUser.name.charAt(0)}
+                A
               </div>
             </div>
           </div>

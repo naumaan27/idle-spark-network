@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import ExportModal from '@/components/modals/ExportModal';
 import { 
   BarChart3, 
   Users, 
@@ -20,6 +22,8 @@ import { adminStats, mockUsers } from '@/data/mockData';
 import meshNetwork from '@/assets/mesh-network.jpg';
 
 const Admin = () => {
+  const { toast } = useToast();
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const overviewStats = [
     {
       title: 'Total Devices',
@@ -298,7 +302,11 @@ const Admin = () => {
               <BarChart3 className="h-6 w-6" />
               <span>Analytics Dashboard</span>
             </Button>
-            <Button variant="eco-soft" className="h-auto p-4 flex-col space-y-2">
+            <Button 
+              variant="eco-soft" 
+              className="h-auto p-4 flex-col space-y-2"
+              onClick={() => setExportModalOpen(true)}
+            >
               <Download className="h-6 w-6" />
               <span>Export Reports</span>
             </Button>
@@ -313,6 +321,9 @@ const Admin = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Export Modal */}
+      <ExportModal open={exportModalOpen} onOpenChange={setExportModalOpen} />
     </div>
   );
 };
