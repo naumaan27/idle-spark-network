@@ -26,7 +26,9 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					glow: 'hsl(var(--primary-glow))',
+					soft: 'hsl(var(--primary-soft))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -84,11 +86,40 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'eco-pulse': {
+					'0%, 100%': {
+						opacity: '1'
+					},
+					'50%': {
+						opacity: '0.7'
+					}
+				},
+				'eco-glow': {
+					'0%, 100%': {
+						boxShadow: '0 0 20px hsl(var(--primary-glow) / 0.3)'
+					},
+					'50%': {
+						boxShadow: '0 0 30px hsl(var(--primary-glow) / 0.6)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'eco-pulse': 'eco-pulse 2s ease-in-out infinite',
+				'eco-glow': 'eco-glow 3s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'eco-gradient': 'var(--eco-gradient)',
+				'eco-gradient-soft': 'var(--eco-gradient-soft)'
+			},
+			boxShadow: {
+				'eco': 'var(--eco-shadow)',
+				'eco-glow': 'var(--eco-shadow-glow)'
+			},
+			transitionTimingFunction: {
+				'eco': 'cubic-bezier(0.4, 0, 0.2, 1)'
 			}
 		}
 	},
